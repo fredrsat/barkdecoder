@@ -3,6 +3,8 @@
 Sanntidstolkning av hundelyder i nettleseren – laget for en dansk-svensk gårdshund,
 men funker for alle hunder.
 
+**Prøv den:** https://fredrsat.github.io/barkdecoder/
+
 ## Slik virker den
 
 1. **Generisk gjenkjenning fra dag én**: Googles lydmodell YAMNet kjører lokalt i
@@ -25,9 +27,9 @@ npm run dev
 
 Åpne adressen som vises, trykk **Start lytting** og gi nettleseren mikrofontilgang.
 
-> Merk: mikrofontilgang krever `localhost` eller HTTPS. Skal du bruke appen på
-> mobilen, kjør `npm run dev -- --host` og åpne via en HTTPS-tunnel, eller bygg
-> med `npm run build` og server `dist/` over HTTPS.
+> Merk: mikrofontilgang krever `localhost` eller HTTPS. På mobil: bruk
+> Pages-utgaven over – hver push til `main` deployes automatisk dit via
+> GitHub Actions (`.github/workflows/deploy.yml`).
 
 ## Arkitektur
 
