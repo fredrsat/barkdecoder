@@ -76,6 +76,9 @@ export class MicCapture {
   onLevel: ((rms: number) => void) | null = null
 
   async start(): Promise<void> {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Nettleseren støtter ikke mikrofonopptak')
+    }
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: false,
@@ -84,13 +87,11 @@ export class MicCapture {
         channelCount: 1,
       },
     })
-    let ctx: AudioContext
-    try {
-      ctx = new AudioContext({ sampleRate: SAMPLE_RATE })
-    } catch {
-      ctx = new AudioContext()
-    }
+    // Bruk maskinvarens samplerate og resample selv til 16 kHz — Safari nekter
+    // å koble mikrofonstrømmen til en kontekst med avvikende samplerate.
+    const ctx = new AudioContext()
     this.ctx = ctx
+    if (ctx.state === 'suspended') await ctx.resume()
     const blob = new Blob([WORKLET_SOURCE], { type: 'application/javascript' })
     const url = URL.createObjectURL(blob)
     await ctx.audioWorklet.addModule(url)

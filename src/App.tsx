@@ -149,6 +149,7 @@ export default function App() {
   }
 
   const start = async () => {
+    setLoadError(null)
     const detector = new DogDetector()
     detector.onStatus = setStatus
     detector.onLevel = (l) => { levelRef.current = l }
@@ -158,7 +159,20 @@ export default function App() {
       await detector.start()
       setListening(true)
     } catch (err) {
-      setLoadError(`Fikk ikke tilgang til mikrofonen: ${err}`)
+      detector.stop()
+      detectorRef.current = null
+      const e = err as DOMException
+      if (e?.name === 'NotAllowedError' || e?.name === 'PermissionDeniedError' || e?.name === 'SecurityError') {
+        setLoadError(
+          'Mikrofontilgang ble avvist. Gi nettstedet tilgang til mikrofonen i nettleserens innstillinger (adressefeltet → tillatelser) og prøv igjen.'
+        )
+      } else if (e?.name === 'NotFoundError') {
+        setLoadError('Fant ingen mikrofon på enheten.')
+      } else if (e?.name === 'NotReadableError') {
+        setLoadError('Mikrofonen er opptatt i et annet program. Lukk det og prøv igjen.')
+      } else {
+        setLoadError(`Klarte ikke å starte lyttingen (${e?.name ?? 'ukjent feil'}): ${e?.message ?? err}`)
+      }
     }
   }
 
