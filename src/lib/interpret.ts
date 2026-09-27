@@ -59,6 +59,25 @@ export function interpret(category: DogCategory, f: AcousticFeatures): string {
   }
 }
 
+/** Helhetsvurdering av en lytteøkt: dominerende lydtype + eventuelle innslag */
+export function interpretSession(
+  category: DogCategory,
+  secondaryCategory: DogCategory | null,
+  f: AcousticFeatures,
+  segmentCount: number
+): string {
+  const base = interpret(category, f)
+  const parts: string[] = []
+  if (segmentCount > 1) {
+    parts.push(`Økten hadde ${segmentCount} lydsekvenser som ses under ett.`)
+  }
+  parts.push(base)
+  if (secondaryCategory) {
+    parts.push(`Det var også innslag av ${CATEGORY_LABELS[secondaryCategory].toLowerCase()} – opphisselsen kan ha endret seg underveis.`)
+  }
+  return parts.join(' ')
+}
+
 export function describeFeatures(f: AcousticFeatures): string {
   const parts: string[] = []
   if (f.pitchHz !== null) parts.push(`tonehøyde ~${Math.round(f.pitchHz)} Hz`)

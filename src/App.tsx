@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { loadYamnet } from './lib/yamnet'
-import { DogDetector, type DogEvent, type LiveStatus } from './lib/detector'
+import {
+  ListeningSession,
+  SESSION_SECONDS,
+  type LiveStatus,
+  type SessionResult,
+} from './lib/detector'
 import {
   addLabel,
   deleteEvent,
@@ -15,7 +20,13 @@ import {
   type StoredExample,
 } from './lib/db'
 import { classify, labelCounts, MIN_EXAMPLES_PER_LABEL } from './lib/knn'
-import { CATEGORY_ICONS, CATEGORY_LABELS, describeFeatures, interpret } from './lib/interpret'
+import {
+  CATEGORY_ICONS,
+  CATEGORY_LABELS,
+  describeFeatures,
+  interpret,
+  interpretSession,
+} from './lib/interpret'
 import { toWavBlob } from './lib/wav'
 import './App.css'
 
@@ -41,12 +52,20 @@ function EventCard({
   }
 
   const time = new Date(event.timestamp).toLocaleTimeString('nb-NO')
+  const interpretation = event.segmentCount
+    ? interpretSession(event.category, event.secondaryCategory ?? null, event.features, event.segmentCount)
+    : interpret(event.category, event.features)
 
   return (
     <div className="event-card">
       <div className="event-header">
         <span className="event-icon">{CATEGORY_ICONS[event.category]}</span>
-        <span className="event-category">{CATEGORY_LABELS[event.category]}</span>
+        <span className="event-category">
+          {CATEGORY_LABELS[event.category]}
+          {event.secondaryCategory && (
+            <span className="event-secondary"> + {CATEGORY_LABELS[event.secondaryCategory].toLowerCase()}</span>
+          )}
+        </span>
         <span className="event-time">{time}</span>
         <button className="icon-btn" onClick={play} title="Spill av">
           ▶
@@ -55,7 +74,7 @@ function EventCard({
           ✕
         </button>
       </div>
-      <p className="event-interpretation">{interpret(event.category, event.features)}</p>
+      <p className="event-interpretation">{interpretation}</p>
       <div className="event-meta">{describeFeatures(event.features)}</div>
       {event.predictedLabel && (
         <div className="event-prediction">
@@ -104,17 +123,22 @@ function EventCard({
   )
 }
 
+const RING_RADIUS = 110
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
+
 export default function App() {
   const [modelReady, setModelReady] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [listening, setListening] = useState(false)
+  const [phase, setPhase] = useState<'idle' | 'listening'>('idle')
+  const [secondsLeft, setSecondsLeft] = useState(SESSION_SECONDS)
+  const [info, setInfo] = useState<string | null>(null)
   const [status, setStatus] = useState<LiveStatus>({ state: 'stille', category: null, dogScore: 0 })
   const [level, setLevel] = useState(0)
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [labels, setLabels] = useState<string[]>([])
   const [examples, setExamples] = useState<StoredExample[]>([])
 
-  const detectorRef = useRef<DogDetector | null>(null)
+  const sessionRef = useRef<ListeningSession | null>(null)
   const examplesRef = useRef<StoredExample[]>([])
   examplesRef.current = examples
   const levelRef = useRef(0)
@@ -130,16 +154,28 @@ export default function App() {
     return () => clearInterval(meterTimer)
   }, [])
 
-  const handleEvent = async (e: DogEvent) => {
-    const prediction = classify(e.embedding, examplesRef.current)
+  const handleDone = async (result: SessionResult | null) => {
+    sessionRef.current = null
+    setPhase('idle')
+    levelRef.current = 0
+    setStatus({ state: 'stille', category: null, dogScore: 0 })
+    if (!result) {
+      setInfo('Ingen hundelyd fanget opp i økten. Prøv igjen når hunden sier noe!')
+      return
+    }
+    setInfo(null)
+    const prediction = classify(result.embedding, examplesRef.current)
     const stored: StoredEvent = {
-      id: e.id,
-      timestamp: e.timestamp,
-      category: e.category,
-      dogScore: e.dogScore,
-      features: e.features,
-      embedding: e.embedding,
-      clip: e.clip,
+      id: result.id,
+      timestamp: result.timestamp,
+      category: result.category,
+      secondaryCategory: result.secondaryCategory,
+      dogScore: result.dogScore,
+      features: result.features,
+      embedding: result.embedding,
+      clip: result.clip,
+      segmentCount: result.segmentCount,
+      activeSec: result.activeSec,
       userLabel: null,
       predictedLabel: prediction?.label ?? null,
       predictedConfidence: prediction?.confidence ?? null,
@@ -148,19 +184,21 @@ export default function App() {
     setEvents((prev) => [stored, ...prev].slice(0, 200))
   }
 
-  const start = async () => {
+  const startSession = async () => {
     setLoadError(null)
-    const detector = new DogDetector()
-    detector.onStatus = setStatus
-    detector.onLevel = (l) => { levelRef.current = l }
-    detector.onEvent = (e) => void handleEvent(e)
-    detectorRef.current = detector
+    setInfo(null)
+    const session = new ListeningSession()
+    session.onStatus = setStatus
+    session.onTick = setSecondsLeft
+    session.onLevel = (l) => { levelRef.current = l }
+    session.onDone = (r) => void handleDone(r)
+    sessionRef.current = session
+    setSecondsLeft(SESSION_SECONDS)
     try {
-      await detector.start()
-      setListening(true)
+      await session.start()
+      setPhase('listening')
     } catch (err) {
-      detector.stop()
-      detectorRef.current = null
+      sessionRef.current = null
       const e = err as DOMException
       if (e?.name === 'NotAllowedError' || e?.name === 'PermissionDeniedError' || e?.name === 'SecurityError') {
         setLoadError(
@@ -176,12 +214,9 @@ export default function App() {
     }
   }
 
-  const stop = () => {
-    detectorRef.current?.stop()
-    detectorRef.current = null
-    setListening(false)
-    levelRef.current = 0
-    setStatus({ state: 'stille', category: null, dogScore: 0 })
+  const handleButton = () => {
+    if (phase === 'idle') void startSession()
+    else sessionRef.current?.stopEarly()
   }
 
   const handleLabel = async (event: StoredEvent, label: string | null) => {
@@ -214,20 +249,25 @@ export default function App() {
   }
 
   const counts = labelCounts(examples)
+  const listening = phase === 'listening'
 
-  const statusText = !listening
-    ? 'Trykk på hunden for å starte'
-    : status.state === 'hundelyd' && status.category
-      ? `${CATEGORY_ICONS[status.category]} Hører ${CATEGORY_LABELS[status.category].toLowerCase()}!`
-      : status.state === 'lyd'
-        ? 'Hører lyd (ikke hund)'
-        : 'Lytter … stille'
+  const statusText = info
+    ? info
+    : !listening
+      ? 'Trykk på hunden for å starte en lytteøkt'
+      : status.state === 'hundelyd' && status.category
+        ? `${CATEGORY_ICONS[status.category]} Hører ${CATEGORY_LABELS[status.category].toLowerCase()}!`
+        : status.state === 'lyd'
+          ? 'Hører lyd (ikke hund)'
+          : 'Lytter … stille'
+
+  const ringProgress = secondsLeft / SESSION_SECONDS
 
   return (
     <div className="app">
       <header>
         <h1>🐕 Bjeffedekoder</h1>
-        <p className="subtitle">Sanntidstolkning av hundelyder – kalibrert for din hund over tid</p>
+        <p className="subtitle">30 sekunders lytteøkt – én samlet tolkning av det hunden sa</p>
       </header>
 
       {loadError && <div className="error">{loadError}</div>}
@@ -239,32 +279,52 @@ export default function App() {
               <span className="ripple ripple-1" />
               <span className="ripple ripple-2" />
               <span className="ripple ripple-3" />
+              <svg className="countdown-ring" viewBox="0 0 230 230">
+                <circle className="ring-track" cx="115" cy="115" r={RING_RADIUS} />
+                <circle
+                  className="ring-progress"
+                  cx="115"
+                  cy="115"
+                  r={RING_RADIUS}
+                  strokeDasharray={RING_CIRCUMFERENCE}
+                  strokeDashoffset={RING_CIRCUMFERENCE * (1 - ringProgress)}
+                />
+              </svg>
             </>
           )}
           <button
             className={`shazam-btn ${listening ? 'listening' : ''}`}
             disabled={!modelReady}
-            onClick={listening ? stop : start}
+            onClick={handleButton}
             style={
               listening
                 ? { boxShadow: `0 0 ${30 + Math.min(90, (level / 0.2) * 90)}px rgba(96, 165, 250, ${0.45 + Math.min(0.4, (level / 0.2) * 0.4)})` }
                 : undefined
             }
           >
-            <span className="shazam-icon">🐕</span>
-            <span className="shazam-label">
-              {!modelReady ? 'Laster …' : listening ? 'Lytter' : 'Trykk for å lytte'}
-            </span>
+            {listening ? (
+              <>
+                <span className="countdown-number">{secondsLeft}</span>
+                <span className="shazam-label">Trykk for å avslutte</span>
+              </>
+            ) : (
+              <>
+                <span className="shazam-icon">🐕</span>
+                <span className="shazam-label">{!modelReady ? 'Laster …' : 'Trykk for å lytte'}</span>
+              </>
+            )}
           </button>
         </div>
-        <div className={`status ${status.state === 'hundelyd' ? 'status-dog' : ''}`}>{statusText}</div>
+        <div className={`status ${status.state === 'hundelyd' && listening ? 'status-dog' : ''}`}>
+          {statusText}
+        </div>
       </section>
 
       <section className="training-panel">
         <h2>Din hunds modell</h2>
         {labels.length === 0 ? (
           <p className="hint">
-            Merk hendelser nedenfor med kontekst (f.eks. «noen ved døra», «vil ut», «vil leke»).
+            Merk øktene nedenfor med kontekst (f.eks. «noen ved døra», «vil ut», «vil leke»).
             Fra {MIN_EXAMPLES_PER_LABEL} eksempler per etikett begynner appen å gjenkjenne dem selv.
           </p>
         ) : (
@@ -286,9 +346,9 @@ export default function App() {
       </section>
 
       <section className="feed">
-        <h2>Hendelser</h2>
+        <h2>Lytteøkter</h2>
         {events.length === 0 ? (
-          <p className="hint">Ingen hendelser ennå. Start lyttingen og vent på at hunden sier noe!</p>
+          <p className="hint">Ingen økter ennå. Trykk på hunden når din egen har noe på hjertet!</p>
         ) : (
           events.map((e) => (
             <EventCard

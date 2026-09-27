@@ -136,6 +136,38 @@ header h1 {
   24%      { transform: scale(1); }
 }
 
+.countdown-ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ring-track,
+.ring-progress {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.ring-track {
+  stroke: rgba(255, 255, 255, 0.15);
+}
+
+.ring-progress {
+  stroke: #fff;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.countdown-number {
+  font-size: 3.6rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
 .shazam-icon {
   font-size: 4.2rem;
   line-height: 1;

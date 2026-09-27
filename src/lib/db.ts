@@ -13,10 +13,16 @@ export interface StoredEvent {
   id: string
   timestamp: number
   category: DogCategory
+  /** Tydelig innslag av en annen lydtype i økten (øktbaserte hendelser) */
+  secondaryCategory?: DogCategory | null
   dogScore: number
   features: AcousticFeatures
   embedding: Float32Array
   clip: Float32Array
+  /** Antall lydsekvenser i økten (øktbaserte hendelser) */
+  segmentCount?: number
+  /** Sekunder med faktisk hundelyd i økten */
+  activeSec?: number
   /** Etikett brukeren har satt (brukes også som treningseksempel) */
   userLabel: string | null
   /** Hva den personlige modellen gjettet da hendelsen skjedde */
