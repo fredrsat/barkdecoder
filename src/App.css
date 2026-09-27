@@ -79,17 +79,18 @@ header h1 {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, rgba(96, 165, 250, 0) 70%);
-  animation: ripple 2.6s ease-out infinite;
+  border: 2px solid rgba(96, 165, 250, 0.55);
+  animation: ripple 3s ease-out infinite;
   pointer-events: none;
 }
 
-.ripple-2 { animation-delay: 0.85s; }
-.ripple-3 { animation-delay: 1.7s; }
+.ripple-2 { animation-delay: 1s; }
+.ripple-3 { animation-delay: 2s; }
 
 @keyframes ripple {
-  0%   { transform: scale(1);   opacity: 0.9; }
-  100% { transform: scale(2.1); opacity: 0; }
+  0%   { transform: scale(1.02); opacity: 0; }
+  15%  { opacity: 0.6; }
+  100% { transform: scale(1.55); opacity: 0; }
 }
 
 .shazam-btn {
@@ -126,14 +127,15 @@ header h1 {
   cursor: default;
 }
 
+/* Under nedtelling ligger knappen i ro – ringen og gløden viser aktivitet */
 .shazam-btn.listening {
-  animation: heartbeat 2.6s ease-in-out infinite;
+  transform: none;
+  transition: box-shadow 0.35s ease;
 }
 
-@keyframes heartbeat {
-  0%, 100% { transform: scale(1); }
-  12%      { transform: scale(1.05); }
-  24%      { transform: scale(1); }
+.shazam-btn.listening:hover,
+.shazam-btn.listening:active {
+  transform: none;
 }
 
 .countdown-ring {
