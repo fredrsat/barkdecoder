@@ -43,11 +43,26 @@ function EventCard({
 }) {
   const [labelMode, setLabelMode] = useState(false)
   const [newLabel, setNewLabel] = useState('')
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const play = () => {
+  useEffect(() => () => audioRef.current?.pause(), [])
+
+  const togglePlay = () => {
+    if (playing) {
+      audioRef.current?.pause()
+      return
+    }
     const url = URL.createObjectURL(toWavBlob(event.clip))
     const audio = new Audio(url)
-    audio.onended = () => URL.revokeObjectURL(url)
+    audioRef.current = audio
+    const done = () => {
+      URL.revokeObjectURL(url)
+      setPlaying(false)
+    }
+    audio.onended = done
+    audio.onpause = done
+    setPlaying(true)
     void audio.play()
   }
 
@@ -67,10 +82,14 @@ function EventCard({
           )}
         </span>
         <span className="event-time">{time}</span>
-        <button className="icon-btn" onClick={play} title="Spill av">
-          ▶
+        <button
+          className={`icon-btn ${playing ? 'icon-btn-playing' : ''}`}
+          onClick={togglePlay}
+          title={playing ? 'Stopp' : 'Spill av'}
+        >
+          {playing ? '⏸' : '▶'}
         </button>
-        <button className="icon-btn" onClick={() => onDelete(event)} title="Slett">
+        <button className="icon-btn icon-btn-danger" onClick={() => onDelete(event)} title="Slett">
           ✕
         </button>
       </div>

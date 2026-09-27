@@ -1,25 +1,40 @@
 :root {
-  --bg-top: #071033;
-  --bg-bottom: #12266b;
-  --card: rgba(255, 255, 255, 0.07);
-  --card-border: rgba(255, 255, 255, 0.12);
+  --bg-deep: #060b24;
+  --bg-mid: #0c1747;
+  --glow: #22398f;
+  --card: rgba(139, 158, 255, 0.07);
+  --card-border: rgba(139, 158, 255, 0.16);
+  --card-border-strong: rgba(139, 158, 255, 0.32);
   --text: #eef2ff;
-  --muted: #93a3d1;
-  --accent: #60a5fa;
-  --accent-deep: #2563eb;
-  --green: #6ee7b7;
-  --green-soft: rgba(110, 231, 183, 0.15);
-  --chip: rgba(96, 165, 250, 0.18);
+  --muted: #8f9fd6;
+  --accent: #5b9dff;
+  --accent-bright: #8ec1ff;
+  --accent-deep: #2458e6;
+  --violet: #8b7cf6;
+  --mint: #5eead4;
+  --mint-soft: rgba(94, 234, 212, 0.14);
+  --rose: #fb7185;
+  --chip: rgba(91, 157, 255, 0.16);
+  --chip-hover: rgba(91, 157, 255, 0.3);
   color-scheme: dark;
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
 }
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%) fixed;
+  background:
+    radial-gradient(900px 600px at 50% -8%, var(--glow) 0%, rgba(34, 57, 143, 0) 65%),
+    linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 100%) fixed;
+  background-color: var(--bg-deep);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -48,11 +63,11 @@ header h1 {
 }
 
 .error {
-  background: rgba(248, 113, 113, 0.15);
-  border: 1px solid rgba(248, 113, 113, 0.4);
-  color: #fecaca;
+  background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.4);
+  color: #fecdd3;
   padding: 0.75rem 1rem;
-  border-radius: 10px;
+  border-radius: 12px;
   margin: 1rem 0;
 }
 
@@ -79,7 +94,7 @@ header h1 {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid rgba(96, 165, 250, 0.55);
+  border: 2px solid rgba(139, 174, 255, 0.55);
   animation: ripple 3s ease-out infinite;
   pointer-events: none;
 }
@@ -91,51 +106,6 @@ header h1 {
   0%   { transform: scale(1.02); opacity: 0; }
   15%  { opacity: 0.6; }
   100% { transform: scale(1.55); opacity: 0; }
-}
-
-.shazam-btn {
-  width: 210px;
-  height: 210px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  color: #fff;
-  background: radial-gradient(circle at 32% 28%, #7db4fb 0%, var(--accent-deep) 55%, #1b3fa8 100%);
-  box-shadow:
-    0 0 45px rgba(96, 165, 250, 0.35),
-    0 14px 40px rgba(0, 0, 0, 0.45),
-    inset 0 2px 10px rgba(255, 255, 255, 0.25);
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
-  z-index: 1;
-}
-
-.shazam-btn:hover:not(:disabled) {
-  transform: scale(1.04);
-}
-
-.shazam-btn:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.shazam-btn:disabled {
-  filter: saturate(0.3) brightness(0.7);
-  cursor: default;
-}
-
-/* Under nedtelling ligger knappen i ro – ringen og gløden viser aktivitet */
-.shazam-btn.listening {
-  transform: none;
-  transition: box-shadow 0.35s ease;
-}
-
-.shazam-btn.listening:hover,
-.shazam-btn.listening:active {
-  transform: none;
 }
 
 .countdown-ring {
@@ -154,12 +124,58 @@ header h1 {
 }
 
 .ring-track {
-  stroke: rgba(255, 255, 255, 0.15);
+  stroke: rgba(255, 255, 255, 0.14);
 }
 
 .ring-progress {
-  stroke: #fff;
+  stroke: var(--mint);
+  filter: drop-shadow(0 0 6px rgba(94, 234, 212, 0.5));
   transition: stroke-dashoffset 1s linear;
+}
+
+.shazam-btn {
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: #fff;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 42%),
+    linear-gradient(150deg, var(--accent) 0%, var(--accent-deep) 55%, var(--violet) 130%);
+  box-shadow:
+    0 0 45px rgba(91, 157, 255, 0.35),
+    0 14px 40px rgba(0, 0, 0, 0.5),
+    inset 0 2px 10px rgba(255, 255, 255, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.35s ease;
+  z-index: 1;
+}
+
+.shazam-btn:hover:not(:disabled) {
+  transform: scale(1.04);
+}
+
+.shazam-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.shazam-btn:disabled {
+  filter: saturate(0.3) brightness(0.7);
+  cursor: default;
+}
+
+/* Under nedtelling ligger knappen i ro – men trykk gir fortsatt respons */
+.shazam-btn.listening:hover {
+  transform: none;
+}
+
+.shazam-btn.listening:active {
+  transform: scale(0.96);
 }
 
 .countdown-number {
@@ -195,7 +211,7 @@ header h1 {
   color: #fff;
   font-weight: 700;
   font-size: 1.3rem;
-  text-shadow: 0 0 18px rgba(96, 165, 250, 0.8);
+  text-shadow: 0 0 18px rgba(94, 234, 212, 0.8);
 }
 
 /* ---- Kort/seksjoner ---- */
@@ -204,15 +220,19 @@ section.training-panel,
 section.feed {
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 1.25rem;
   margin-bottom: 1.25rem;
   backdrop-filter: blur(6px);
 }
 
 h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.05rem;
+  margin: 0 0 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .hint {
@@ -232,11 +252,23 @@ h2 {
   align-items: center;
   gap: 0.35rem;
   background: var(--chip);
+  border: 1px solid transparent;
   color: var(--text);
   border-radius: 999px;
-  padding: 0.25rem 0.75rem;
+  padding: 0.3rem 0.8rem;
   font-size: 0.88rem;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+  user-select: none;
+}
+
+.chip:hover {
+  background: var(--chip-hover);
+  border-color: var(--card-border-strong);
+}
+
+.chip:active {
+  transform: scale(0.94);
 }
 
 .chip em {
@@ -246,12 +278,13 @@ h2 {
 }
 
 .chip-trained {
-  background: var(--green-soft);
+  background: var(--mint-soft);
 }
 
 .chip-active {
-  background: var(--green-soft);
-  color: var(--green);
+  background: var(--mint-soft);
+  border-color: rgba(94, 234, 212, 0.4);
+  color: var(--mint);
   font-weight: 600;
 }
 
@@ -260,16 +293,26 @@ h2 {
   background: none;
   color: var(--muted);
   cursor: pointer;
-  padding: 0;
+  padding: 0 0 0 0.15rem;
   font-size: 0.75rem;
+  transition: color 0.15s ease;
+}
+
+.chip-delete:hover {
+  color: var(--rose);
 }
 
 .event-card {
   border: 1px solid var(--card-border);
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
   padding: 0.9rem 1rem;
   margin-bottom: 0.75rem;
+  transition: border-color 0.2s ease;
+}
+
+.event-card:hover {
+  border-color: var(--card-border-strong);
 }
 
 .event-header {
@@ -287,6 +330,12 @@ h2 {
   flex: 1;
 }
 
+.event-secondary {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
 .event-time {
   color: var(--muted);
   font-size: 0.85rem;
@@ -294,12 +343,48 @@ h2 {
 
 .icon-btn {
   border: 1px solid var(--card-border);
-  background: none;
+  background: rgba(139, 158, 255, 0.08);
   color: var(--text);
-  border-radius: 8px;
-  width: 2rem;
-  height: 2rem;
+  border-radius: 10px;
+  width: 2.3rem;
+  height: 2.3rem;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(139, 158, 255, 0.18);
+  border-color: var(--card-border-strong);
+}
+
+.icon-btn:active {
+  transform: scale(0.88);
+  background: rgba(139, 158, 255, 0.3);
+}
+
+.icon-btn-playing {
+  background: linear-gradient(150deg, var(--accent) 0%, var(--accent-deep) 100%);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(91, 157, 255, 0.55);
+}
+
+.icon-btn-playing:hover {
+  background: linear-gradient(150deg, var(--accent-bright) 0%, var(--accent-deep) 100%);
+}
+
+.icon-btn-danger:hover {
+  border-color: rgba(251, 113, 133, 0.5);
+  color: var(--rose);
+  background: rgba(251, 113, 133, 0.12);
+}
+
+.icon-btn-danger:active {
+  background: rgba(251, 113, 133, 0.25);
 }
 
 .event-interpretation {
@@ -315,7 +400,7 @@ h2 {
 .event-prediction {
   margin-top: 0.5rem;
   font-size: 0.9rem;
-  color: var(--green);
+  color: var(--mint);
 }
 
 .event-labeling {
@@ -327,23 +412,44 @@ h2 {
 }
 
 .label-btn {
-  border: 1px dashed var(--card-border);
+  border: 1px dashed var(--card-border-strong);
   background: none;
   color: var(--muted);
   border-radius: 999px;
-  padding: 0.25rem 0.75rem;
+  padding: 0.3rem 0.8rem;
   cursor: pointer;
   font-size: 0.85rem;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+
+.label-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--chip);
+}
+
+.label-btn:active {
+  transform: scale(0.94);
 }
 
 .new-label-form input {
   border: 1px solid var(--card-border);
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.3);
   color: var(--text);
   border-radius: 999px;
-  padding: 0.25rem 0.75rem;
+  padding: 0.3rem 0.8rem;
   font-size: 0.85rem;
   width: 8.5rem;
+  transition: border-color 0.15s ease;
+}
+
+.new-label-form input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.new-label-form input::placeholder {
+  color: var(--muted);
 }
 
 footer {
